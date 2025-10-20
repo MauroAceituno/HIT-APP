@@ -4,7 +4,7 @@ const App = () => {
   const [phase, setPhase] = useState("idle"); // idle | hit | rest
   const [time, setTime] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
-  const [selectedMinutes, setSelectedMinutes] = useState(5); // minutos elegidos
+  const [selectedMinutes, setSelectedMinutes] = useState(15); // minutos elegidos
   const intervalRef = useRef(null);
   const totalIntervalRef = useRef(null);
 
