@@ -1,16 +1,34 @@
 import { useEffect, useRef, useState } from "react";
 
 const App = () => {
-  const [phase, setPhase] = useState("idle"); // idle | hit | rest
+  const [phase, setPhase] = useState("idle"); // idle | countdown | hit | rest
+  const [countdown, setCountdown] = useState(3);
   const [time, setTime] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
-  const [selectedMinutes, setSelectedMinutes] = useState(15); // minutos elegidos
+  const [selectedMinutes, setSelectedMinutes] = useState(15);
   const intervalRef = useRef(null);
   const totalIntervalRef = useRef(null);
 
+  // Cuenta regresiva inicial
+  useEffect(() => {
+    if (phase !== "countdown") return;
+    if (countdown === 0) {
+      setPhase("hit");
+      setTime(0);
+      setTotalTime(0);
+      return;
+    }
+
+    const countdownTimer = setTimeout(() => {
+      setCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(countdownTimer);
+  }, [phase, countdown]);
+
   // Timer de fase (HIT / REST)
   useEffect(() => {
-    if (phase === "idle") return;
+    if (phase !== "hit" && phase !== "rest") return;
 
     intervalRef.current = setInterval(() => {
       setTime((prev) => prev + 10);
@@ -21,7 +39,7 @@ const App = () => {
 
   // Timer total
   useEffect(() => {
-    if (phase === "idle") return;
+    if (phase !== "hit" && phase !== "rest") return;
 
     totalIntervalRef.current = setInterval(() => {
       setTotalTime((prev) => prev + 10);
@@ -30,9 +48,9 @@ const App = () => {
     return () => clearInterval(totalIntervalRef.current);
   }, [phase]);
 
-  // Cambio de fase cada 1 min
+  // Cambio de fase cada 1 minuto
   useEffect(() => {
-    if (phase === "idle") return;
+    if (phase !== "hit" && phase !== "rest") return;
     if (time >= 60000) {
       setTime(0);
       setPhase((prev) => (prev === "hit" ? "rest" : "hit"));
@@ -42,20 +60,20 @@ const App = () => {
   // Detener cuando llega al total seleccionado
   useEffect(() => {
     const totalMs = selectedMinutes * 60000;
-    if (totalTime >= totalMs && phase !== "idle") {
+    if (totalTime >= totalMs && (phase === "hit" || phase === "rest")) {
       handleStop();
     }
   }, [totalTime]);
 
   const handleStart = () => {
-    setPhase("hit");
-    setTime(0);
-    setTotalTime(0);
+    setCountdown(3);
+    setPhase("countdown");
   };
 
   const handleStop = () => {
     setPhase("idle");
     setTime(0);
+    setTotalTime(0);
     clearInterval(intervalRef.current);
     clearInterval(totalIntervalRef.current);
   };
@@ -69,6 +87,7 @@ const App = () => {
   };
 
   const getBackground = () => {
+    if (phase === "countdown") return "#111";
     if (phase === "hit") return "#00b894";
     if (phase === "rest") return "#636e72";
     return "#111";
@@ -95,11 +114,11 @@ const App = () => {
     >
       <style>{`
         .no-scrollbar {
-          scrollbar-width: none; /* Firefox */
-          -ms-overflow-style: none; /* IE 10+ */
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
         .no-scrollbar::-webkit-scrollbar {
-          display: none; /* Safari and Chrome */
+          display: none;
         }
       `}</style>
 
@@ -155,6 +174,10 @@ const App = () => {
             {selectedMinutes === 1 ? "MINUTO" : "MINUTOS"}
           </button>
         </>
+      ) : phase === "countdown" ? (
+        <div style={{ fontSize: "6rem", fontWeight: "bold" }}>
+          {countdown === 0 ? "YA!" : countdown}
+        </div>
       ) : (
         <>
           <div style={{ fontSize: "2rem", opacity: 0.8 }}>
